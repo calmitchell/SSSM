@@ -41,7 +41,13 @@ public class StockMarketServiceImpl implements StockMarketService {
 	 * @param price The price the trade was booked at.
 	 */
 	public void recordTrade(String symbol, LocalDateTime timestamp, int quantity, TradeType type, double price){
-		tradeService.addTrade(symbol,timestamp, quantity, type, price);
+		try {
+			tradeService.addTrade(symbol,timestamp, quantity, type, price);
+		} catch (StockNotFoundException e) {
+			// In real world would determine how handle this.
+			e.printStackTrace();
+		}
+		
 	}
 	
 	/** Calculate the dividend yield for a security based on the price input.
@@ -53,6 +59,11 @@ public class StockMarketServiceImpl implements StockMarketService {
 	public double calcDividendYield(String symbol, double price) {
 		
 		Stock stock = stockRepository.getStock(symbol);
+		// Would have to handle this as proper exception.
+		if(stock == null) {
+			return 0;
+		}
+		
 		double dividendYield; 
 		
 		if(price == 0) {
@@ -79,6 +90,10 @@ public class StockMarketServiceImpl implements StockMarketService {
 	public double calcPERatio(String symbol, double price) {
 		
 		Stock stock = stockRepository.getStock(symbol);
+		// Would have to handle this as proper exception.
+		if(stock == null) {
+			return 0;
+		}
 		double lastDividend = stock.getLastDividend();
 
 		if(lastDividend == 0) {
@@ -100,16 +115,21 @@ public class StockMarketServiceImpl implements StockMarketService {
 		double sumPriceQuantity = 0;
 		double sumQuantity = 0 ;
 		
-		for(Trade trade : tradeService.getLast15MinutesTrades(symbol)) {
-			sumPriceQuantity += trade.getPrice() * trade.getQuantity() ;
-			sumQuantity += trade.getQuantity() ;
-		}
+		try {
+			for(Trade trade : tradeService.getLast15MinutesTrades(symbol)) {
+				sumPriceQuantity += trade.getPrice() * trade.getQuantity() ;
+				sumQuantity += trade.getQuantity() ;
+			}
 		
-		if(sumQuantity == 0) {
-			return 0 ;
-		}
-		else {
-			return sumPriceQuantity / sumQuantity ;
+			if(sumQuantity == 0) {
+				return 0 ;
+			}
+			else {
+				return sumPriceQuantity / sumQuantity ;
+			}
+		} catch (StockNotFoundException e) {
+			// Would have to handle this as proper exception.
+			return 0;
 		}
 	}
 	/** Calculate the All Share Index using the Weighted Average price 
@@ -140,6 +160,10 @@ public class StockMarketServiceImpl implements StockMarketService {
 				}
 				stockCount++;
 			}
+		}
+		
+		if(stockCount == 0) {
+			return 0;
 		}
 		
 		return Math.pow(sumVolumeWeightedPrice, 1.0/stockCount);
