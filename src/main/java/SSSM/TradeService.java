@@ -9,6 +9,6 @@ import java.time.LocalDateTime;
  */
 public interface TradeService {
 
-	public void addTrade(String securitySymbol,LocalDateTime timestamp, int quantity, TradeType type, double price);
-	public Trade getTrade(String securitySymbol,LocalDateTime timestamp);
+	public void addTrade(String securitySymbol,LocalDateTime timestamp, int quantity, TradeType type, double price) throws StockNotFoundException;
+	public Trade getTrade(String securitySymbol,LocalDateTime timestamp) throws StockNotFoundException;
 }
